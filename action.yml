@@ -1,0 +1,25 @@
+name: 'Groq AI Code Reviewer'
+description: 'Autonomous AI code review agent powered by LLaMA 3.3'
+branding:
+  icon: 'check-circle'
+  color: 'green'
+inputs:
+  groq_api_key:
+    description: 'Groq API Key for LLaMA 3.3 inference'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: pip install requests groq
+      shell: bash
+    - name: Run AI Agent
+      env:
+        GROQ_API_KEY: ${{ inputs.groq_api_key }}
+        GITHUB_TOKEN: ${{ github.token }}
+      run: python ${{ github.action_path }}/reviewer.py
+      shell: bash

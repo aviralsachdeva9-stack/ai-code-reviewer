@@ -1,0 +1,54 @@
+# ─── AI Code Review — GitHub Actions Workflow ────────────────────────────────
+#
+# Triggers on every Pull Request (opened or updated) and runs the Groq-powered
+# reviewer.py agent, which posts a rich Markdown review comment back to the PR.
+#
+# Required secrets (set these in your repo → Settings → Secrets → Actions):
+#   GROQ_API_KEY  →  Your Groq API key from console.groq.com
+#
+# Automatically provided by GitHub Actions (no manual setup needed):
+#   GITHUB_TOKEN  →  ${{ secrets.GITHUB_TOKEN }}
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: 🤖 AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  pull-requests: write   # allows the script to post PR comments
+  contents: read         # allows checkout & file reads
+
+jobs:
+  ai-review:
+    name: Run Groq LLaMA 3 Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout the repository at the PR head SHA ───────────────────────
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so diffs are accurate
+
+      # ── 2. Set up Python ────────────────────────────────────────────────────
+      - name: 🐍 Set Up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # ── 3. Install Python dependencies ──────────────────────────────────────
+      - name: 📦 Install Dependencies
+        run: pip install -r requirements.txt
+
+      # ── 4. Run the Groq AI reviewer agent ───────────────────────────────────
+      - name: 🔍 Run AI Code Review
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: python reviewer.py
