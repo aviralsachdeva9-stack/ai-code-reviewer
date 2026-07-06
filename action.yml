@@ -1,4 +1,4 @@
-name: 'Groq AI Code Reviewer'
+name: 'Aviral LLaMA 3.3 Reviewer'
 description: 'Autonomous AI code review agent powered by LLaMA 3.3'
 branding:
   icon: 'check-circle'
