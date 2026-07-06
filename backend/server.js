@@ -508,6 +508,8 @@ app.get('/health', (req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
 
+// Testing the new lhr tunnel
+
 function testLogin(username) {
     // AI should catch this SQL injection vulnerability
     let query = "SELECT * FROM users WHERE user = '" + username + "'"; 
