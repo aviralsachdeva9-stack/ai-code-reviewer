@@ -291,6 +291,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
   }
 });
 
+// lets check detailed analysis output
 
 // ─── 2. Stats Endpoint ────────────────────────────────────────────────────────
 app.get('/api/stats', async (req, res) => {
