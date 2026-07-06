@@ -160,6 +160,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
     const inlineComments = [];
     const fileSummaries = [];
+    const allIssues = [];   // ← collect every per-line issue for Detailed Analysis
     let hasIssues = false;
     let topSeverity = 'none';
     const SEV = { high: 3, medium: 2, low: 1, none: 0 };
@@ -195,6 +196,8 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
       if ((SEV[severity] || 0) > (SEV[topSeverity] || 0)) topSeverity = severity;
 
       fileSummaries.push({ path: file.filename, status: overall_status, severity, issueCount: issues.length });
+      // Attach the filename to each issue so the Detailed Analysis can reference it
+      issues.forEach(iss => allIssues.push({ file: file.filename, ...iss }));
       console.log(`  ✓ ${file.filename} → ${overall_status} | ${issues.length} line issue(s)`);
 
       // Build inline comments only for lines within this diff
@@ -224,6 +227,24 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
       return `| ${icon} | \`${f.path}\` | ${detail} | ${f.severity} |`;
     }).join('\n');
 
+    // Build the Detailed Analysis section
+    let detailedSection = '';
+    if (allIssues.length > 0) {
+      detailedSection += '\n---\n\n### 📝 Detailed Analysis\n\n';
+      allIssues.forEach((issue) => {
+        const sevEmoji = { high: '🔴', medium: '🟡', low: '🔵' }[issue.severity] || '⚠️';
+        detailedSection += `#### 📄 File: \`${issue.file}\`\n`;
+        detailedSection += `${sevEmoji} **Vulnerability / Issue:** ${issue.category || issue.type || 'Security Bug'}\n\n`;
+        detailedSection += `**🔍 Explanation:**\n${issue.comment || issue.description || issue.details || '_No details provided._'}\n\n`;
+        if (issue.line) {
+          detailedSection += `**📍 Line No:** ${issue.line}\n\n`;
+        }
+        if (issue.snippet) {
+          detailedSection += `**🧩 Code Snippet:**\n\`\`\`\n${issue.snippet}\n\`\`\`\n\n`;
+        }
+      });
+    }
+
     const summaryBody = [
       header,
       '| | File | Status | Severity |', '|---|---|---|---|',
@@ -231,6 +252,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
       '', '---',
       `> Analysed **${codeFiles.length}** file(s) using **CodeBERT** + pattern detection.`,
       '> *Automated AI review — please also request a human review.*',
+      detailedSection,
     ].join('\n');
 
     // Step 4: Post formal GitHub PR Review with inline comments
