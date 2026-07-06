@@ -1,0 +1,60 @@
+# ─── AI Code Review — GitHub Actions Workflow ────────────────────────────────
+#
+# Triggers on every Pull Request (opened or updated) and runs the CodeBERT-based
+# reviewer.py script, which posts a rich Markdown review comment back to the PR.
+#
+# Required secrets (auto-provided by GitHub Actions — no manual setup needed):
+#   GITHUB_TOKEN  →  ${{ secrets.GITHUB_TOKEN }}
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: 🤖 AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  pull-requests: write   # allows the script to post PR comments
+  contents: read         # allows checkout & file reads
+
+jobs:
+  ai-review:
+    name: Run CodeBERT Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout the repository at the PR head SHA ───────────────────────
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so diffs are accurate
+
+      # ── 2. Set up Python ────────────────────────────────────────────────────
+      - name: 🐍 Set Up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # ── 3. Install Python dependencies ──────────────────────────────────────
+      - name: 📦 Install Dependencies
+        run: pip install -r requirements.txt
+
+      # ── 4. Cache the HuggingFace model weights (speeds up subsequent runs) ──
+      - name: 💾 Cache HuggingFace Model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: ${{ runner.os }}-hf-codebert-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-hf-codebert-
+
+      # ── 5. Run the AI reviewer ───────────────────────────────────────────────
+      - name: 🔍 Run AI Code Review
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python reviewer.py

@@ -1,22 +1,9 @@
 {
   "name": "backend",
-  "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
-  },
+  "version": "2.0.0",
+  "description": "Legacy backend folder — server logic migrated to GitHub Actions + reviewer.py",
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "@octokit/rest": "^18.12.0",
-    "axios": "^1.18.1",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "mongoose": "^9.7.3"
-  }
+  "note": "The Express/MongoDB webhook server (server.js) has been removed. AI review is now handled by the GitHub Actions workflow at .github/workflows/ai-review.yml"
 }
