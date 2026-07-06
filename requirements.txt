@@ -1,5 +1,2 @@
-# GitHub REST API client
 requests==2.32.3
-
-# Groq LLM API client (LLaMA 3)
-groq==0.9.0
+groq
