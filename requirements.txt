@@ -1,6 +1,5 @@
-# Core ML inference
-transformers==4.44.2
-torch==2.4.1
-
-# GitHub REST API client (replaces httpx/axios)
+# GitHub REST API client
 requests==2.32.3
+
+# Groq LLM API client (LLaMA 3)
+groq==0.9.0
