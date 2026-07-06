@@ -25,7 +25,7 @@ from groq import Groq, APIError, APIConnectionError, RateLimitError
 
 # ─── Constants ────────────────────────────────────────────────────────────────
 
-GROQ_MODEL = "llama3-70b-8192"
+GROQ_MODEL = "llama-3.3-70b-versatile"
 
 # File extensions the agent will analyse (skip binary / config / lock files)
 CODE_EXTENSIONS = (
@@ -82,7 +82,7 @@ For each issue found, use this block:
 
 ---
 
-> 🔬 Analysed by **LLaMA 3 70B** via Groq API.
+> 🔬 Analysed by **LLaMA 3.3 70B Versatile** via Groq API.
 > *Automated AI review — please also request a human review for critical changes.*
 """
 
