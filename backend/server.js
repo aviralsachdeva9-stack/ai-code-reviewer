@@ -27,34 +27,34 @@ mongoose.connect(process.env.MONGO_URI)
 
 // ─── Schema: PR Webhook Reviews ───────────────────────────────────────────────
 const ReviewSchema = new mongoose.Schema({
-  prTitle:    { type: String, required: true },
-  repoName:   { type: String, required: true },
-  author:     { type: String, required: true },
-  prNumber:   { type: Number },
-  status:     { type: String, enum: ['Clean', 'Issues Found'], required: true },
-  comment:    { type: String },
-  severity:   { type: String, enum: ['none', 'low', 'medium', 'high'], default: 'none' },
-  category:   { type: String, default: 'general' },
+  prTitle: { type: String, required: true },
+  repoName: { type: String, required: true },
+  author: { type: String, required: true },
+  prNumber: { type: Number },
+  status: { type: String, enum: ['Clean', 'Issues Found'], required: true },
+  comment: { type: String },
+  severity: { type: String, enum: ['none', 'low', 'medium', 'high'], default: 'none' },
+  category: { type: String, default: 'general' },
   filesCount: { type: Number, default: 0 },
-  timestamp:  { type: Date, default: Date.now },
+  timestamp: { type: Date, default: Date.now },
 });
 const Review = mongoose.model('Review', ReviewSchema);
 
 // ─── Schema: Manual Repo Scans ────────────────────────────────────────────────
 const ManualScanSchema = new mongoose.Schema({
-  repoUrl:    { type: String, required: true },
-  repoName:   { type: String, required: true },
-  branch:     { type: String, default: 'main' },
+  repoUrl: { type: String, required: true },
+  repoName: { type: String, required: true },
+  branch: { type: String, default: 'main' },
   totalFiles: { type: Number, default: 0 },
   cleanFiles: { type: Number, default: 0 },
   issueFiles: { type: Number, default: 0 },
   results: [{
-    path:       String,
-    status:     String,
-    severity:   { type: String, default: 'none' },
-    comment:    String,
+    path: String,
+    status: String,
+    severity: { type: String, default: 'none' },
+    comment: String,
     confidence: Number,
-    category:   { type: String, default: 'general' },
+    category: { type: String, default: 'general' },
   }],
   timestamp: { type: Date, default: Date.now },
 });
@@ -99,20 +99,20 @@ function parseGitHubUrl(url) {
 function parseDiff(patch) {
   if (!patch) return { changedLines: [], lineRanges: [] };
   const changedLines = [];
-  const lineRanges   = [];
-  let currentLine    = 0;
-  let hunkStart      = 0;
+  const lineRanges = [];
+  let currentLine = 0;
+  let hunkStart = 0;
 
   for (const raw of patch.split('\n')) {
     const hunkMatch = raw.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
     if (hunkMatch) {
       if (hunkStart > 0) lineRanges.push({ start: hunkStart, end: currentLine - 1 });
       currentLine = parseInt(hunkMatch[1]);
-      hunkStart   = currentLine;
+      hunkStart = currentLine;
       continue;
     }
     if (raw.startsWith('\\')) continue;  // "\ No newline at end of file"
-    if (raw.startsWith('-'))  continue;  // deleted line
+    if (raw.startsWith('-')) continue;  // deleted line
     if (raw.startsWith('+')) changedLines.push(currentLine);
     currentLine++;
   }
@@ -144,10 +144,10 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
   res.status(200).send('Event Received');  // GitHub needs < 10s response
   if (action !== 'opened' && action !== 'synchronize') return;
 
-  const owner      = repository.owner.login;
-  const repo       = repository.name;
+  const owner = repository.owner.login;
+  const repo = repository.name;
   const pullNumber = pull_request.number;
-  const commitId   = pull_request.head.sha;
+  const commitId = pull_request.head.sha;
   console.log(`🔔 PR #${pullNumber} "${pull_request.title}" (${action})`);
 
   try {
@@ -159,10 +159,10 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
     console.log(`📂 ${prFiles.length} changed files → ${codeFiles.length} code files`);
 
     const inlineComments = [];
-    const fileSummaries  = [];
-    let   hasIssues      = false;
-    let   topSeverity    = 'none';
-    const SEV            = { high: 3, medium: 2, low: 1, none: 0 };
+    const fileSummaries = [];
+    let hasIssues = false;
+    let topSeverity = 'none';
+    const SEV = { high: 3, medium: 2, low: 1, none: 0 };
 
     // Step 2: Analyse each code file
     for (const file of codeFiles) {
@@ -185,8 +185,8 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
       }
 
       const aiRes = await axios.post('http://localhost:8000/analyze-pr-file', {
-        code:          content.slice(0, 80000),
-        filename:      file.filename,
+        code: content.slice(0, 80000),
+        filename: file.filename,
         changed_lines: changedLines,
       });
 
@@ -219,7 +219,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
       : '## 🤖 AI Code Review — ✅ All Clear\n';
 
     const rows = fileSummaries.map(f => {
-      const icon   = f.status === 'clean' ? '✅' : '⚠️';
+      const icon = f.status === 'clean' ? '✅' : '⚠️';
       const detail = f.status === 'clean' ? 'Clean' : `Issues Found (${f.issueCount})`;
       return `| ${icon} | \`${f.path}\` | ${detail} | ${f.severity} |`;
     }).join('\n');
@@ -237,8 +237,8 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
     try {
       await octokit.rest.pulls.createReview({
         owner, repo, pull_number: pullNumber, commit_id: commitId,
-        body:     summaryBody,
-        event:    hasIssues ? 'REQUEST_CHANGES' : 'COMMENT',
+        body: summaryBody,
+        event: hasIssues ? 'REQUEST_CHANGES' : 'COMMENT',
         comments: inlineComments,
       });
       console.log(`💬 PR review posted: ${inlineComments.length} inline comment(s)`);
@@ -252,14 +252,14 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
     // Step 5: Save to MongoDB
     await new Review({
-      prTitle:    pull_request.title,
-      repoName:   repository.full_name,
-      author:     pull_request.user.login,
-      prNumber:   pullNumber,
-      status:     hasIssues ? 'Issues Found' : 'Clean',
-      comment:    summaryBody.slice(0, 500),
-      severity:   topSeverity,
-      category:   'security',
+      prTitle: pull_request.title,
+      repoName: repository.full_name,
+      author: pull_request.user.login,
+      prNumber: pullNumber,
+      status: hasIssues ? 'Issues Found' : 'Clean',
+      comment: summaryBody.slice(0, 500),
+      severity: topSeverity,
+      category: 'security',
       filesCount: codeFiles.length,
     }).save();
 
@@ -511,7 +511,9 @@ app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
 // Testing the new lhr tunnel
 
 function testLogin(username) {
-    // AI should catch this SQL injection vulnerability
-    let query = "SELECT * FROM users WHERE user = '" + username + "'"; 
-    return execute(query);
+  // AI should catch this SQL injection vulnerability
+  let query = "SELECT * FROM users WHERE user = '" + username + "'";
+  return execute(query);
 }
+
+// fuck you
